@@ -13,7 +13,7 @@ app.set('view engine', 'pug');
 app.set('views', './views');
 
 // Habilitar tipo de dato a recibir en el server
-app.use(express.json()); 
+app.use(express.json());
 
 
 app.get('/', (req, res) => {
@@ -53,7 +53,7 @@ app.get('/product', (req, res) => {
 app.get('/product/:id?', (req, res) => {
     console.log(req.params); // Params
     if (req.params.id) {
-        // LLamadas a la BBDD 
+        // LLamadas a la BBDD
         // para trar la noticia con ID adecuado
         res.send('Hey! te mando el producto número ' + req.params.id)
     }
@@ -157,7 +157,7 @@ app.post('/products', async (req, res) => {
     const newProduct = req.body; // {} nuevo producto a guardar
 
     // Líneas
-    // para guardar 
+    // para guardar
     // en una BBDD SQL o MongoDB
 
     let response = await fetch('https://fakestoreapi.com/products', {
@@ -184,3 +184,52 @@ app.listen(port, () => {
             T: "U "
         }))
 })
+
+// /products
+// GET http://localhost:3000/api/products/3
+// GET http://localhost:3000/api/products/4
+// GET http://localhost:3000/api/products
+app.get('/api/products/:id?', async (req, res) => {
+    if (req.params.id) { // con ID
+        try {
+            let response = await fetch(`https://fakestoreapi.com/products/${req.params.id}`); //{}
+            let products = await response.json(); //{}
+            res.status(200).json(products); // respuesta de la API 1 producto
+        }
+        catch (error) {
+            console.log(`ERROR: ${error.stack}`);
+        }
+    } else { // sin ID --> TODOS los products
+        try {
+            let response = await fetch(`https://fakestoreapi.com/products`); // []
+            let products = await response.json(); // []
+            res.status(200).json(products); // respuesta de la API todos los productos
+        }
+        catch (error) {
+            console.log(`ERROR: ${error.stack}`);
+        }
+    }
+});
+
+// POST http://localhost:3000/products
+app.post('/api/products', async (req, res) => {
+    console.log("Esto es el console.log de lo que introducimos por postman", req.body); // Objeto recibido de producto nuevo
+    const newProduct = req.body; // {} nuevo producto a guardar
+
+    // Líneas
+    // para guardar
+    // en una BBDD SQL o MongoDB
+
+    let response = await fetch('https://fakestoreapi.com/products', {
+        method: "POST",
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(newProduct)
+    })
+    let answer = await response.json(); // objeto de vuelta de la petición
+    console.log("Este es el console.log de lo que devuelve la api", answer);
+
+    res.status(201).json({ msj: `Producto ${answer.title} guardado en el sistema con ID: ${answer.id}`, "product":answer });
+});

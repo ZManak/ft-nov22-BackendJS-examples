@@ -1,8 +1,8 @@
-const express = require('express')
-const cowsay = require('cowsay')
-const fetch = require('node-fetch')
-
-const calculator = require('./modules/calculator')
+const express = require('express');
+const cowsay = require('cowsay');
+const fetch = require('node-fetch');
+const checkApiKey = require('./middlewares/auth_api_key');
+const calculator = require('./modules/calculator');
 //import {  } from "module";
 
 const app = express()
@@ -14,7 +14,10 @@ app.set('views', './views');
 
 // Habilitar tipo de dato a recibir en el server
 app.use(express.json());
-
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static('public'));
+//Check api key
+//app.use(checkApiKey)
 
 app.get('/', (req, res) => {
     const calc = calculator.add(2, 2);
@@ -90,7 +93,7 @@ app.get('/product/detail', (req, res) => {
     "description": "En un lugar de la mancha..."
 }
 */
-app.post('/books', (req, res) => {
+app.post('/books', checkApiKey, (req, res) => {
     console.log("*******DATOS ENVIADOS*******");
     console.log(req.body);
     const {title} = req.body;
@@ -101,7 +104,7 @@ app.get('/books', (req, res) => {
     res.status(200).send("Has mandado un GET!");
 })
 // UPDATE - actualizar un libro
-app.put('/books', (req, res) => {
+app.put('/books', checkApiKey, (req, res) => {
     res.status(202).send("Has mandado un PUT!");
 })
 // DELETE - Borrar un libro
@@ -212,7 +215,7 @@ app.get('/api/products/:id?', async (req, res) => {
 });
 
 // POST http://localhost:3000/products
-app.post('/api/products', async (req, res) => {
+app.post('/api/products', checkApiKey, async (req, res) => {
     console.log("Esto es el console.log de lo que introducimos por postman", req.body); // Objeto recibido de producto nuevo
     const newProduct = req.body; // {} nuevo producto a guardar
 
@@ -231,5 +234,7 @@ app.post('/api/products', async (req, res) => {
     let answer = await response.json(); // objeto de vuelta de la petición
     console.log("Este es el console.log de lo que devuelve la api", answer);
 
-    res.status(201).json({ msj: `Producto ${answer.title} guardado en el sistema con ID: ${answer.id}`, "product":answer });
+    res.status(201).json({
+        msj: `Producto ${answer.title} guardado en el sistema con ID: ${answer.id}`, "product": answer
+    });
 });

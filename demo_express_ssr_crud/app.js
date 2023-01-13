@@ -1,9 +1,14 @@
 const express = require('express');
 const cowsay = require('cowsay');
-const fetch = require('node-fetch');
-const checkApiKey = require('./middlewares/auth_api_key');
-const calculator = require('./modules/calculator');
-//import {  } from "module";
+const manage404 = require("./middlewares/error404")
+const calculator = require('./utils/calculator');
+
+//import {  } from "module"; no se pueden mezclar estas formas de importación
+
+//Rutas - importar
+const booksRouter = require("./routes/booksRoutes");
+const productsRoutes = require("./routes/productsRoutes");
+const productsApiRoutes = require("./routes/productsApiRoutes");
 
 const app = express()
 const port = 3000
@@ -18,6 +23,11 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 //Check api key
 //app.use(checkApiKey)
+
+//Rutas
+app.use("/books", booksRouter);
+app.use("/product", productsRoutes)
+app.use("/api/products", productsApiRoutes)
 
 app.get('/', (req, res) => {
     const calc = calculator.add(2, 2);
@@ -45,41 +55,6 @@ app.get('/pokemon', (req, res) => {
     }
 })
 
-app.get('/product', (req, res) => {
-    res.send('Ahí va un producto')
-})
-
-// http://localhost:3000/product/1
-// http://localhost:3000/product/3
-// http://localhost:3000/product/6
-// http://localhost:3000/product
-app.get('/product/:id?', (req, res) => {
-    console.log(req.params); // Params
-    if (req.params.id) {
-        // LLamadas a la BBDD
-        // para trar la noticia con ID adecuado
-        res.send('Hey! te mando el producto número ' + req.params.id)
-    }
-    else {
-        res.send('Ahí van los productos')
-    }
-})
-
-app.get('/product/detail', (req, res) => {
-    res.json({
-        "id": 1,
-        "title": "Fjallraven - Foldsack No. 1 Backpack, Fits 15 Laptops",
-        "price": 109.95,
-        "description": "Your perfect pack for everyday use and walks in the forest. Stash your laptop (up to 15 inches) in the padded sleeve, your everyday",
-        "category": "men's clothing",
-        "image": "https://fakestoreapi.com/img/81fPKd-2AYL._AC_SL1500_.jpg",
-        "rating": {
-            "rate": 3.9,
-            "count": 120
-        }
-    })
-})
-
 // CRUD --> CREATE, READ, UPDATE, DELETE
 
 // http://localhost:3000/books
@@ -93,55 +68,26 @@ app.get('/product/detail', (req, res) => {
     "description": "En un lugar de la mancha..."
 }
 */
-app.post('/books', checkApiKey, (req, res) => {
-    console.log("*******DATOS ENVIADOS*******");
-    console.log(req.body);
-    const {title} = req.body;
-    res.status(201).json({msj:`Creado libro: ${title}`});
-})
-// READ - leer un libro
-app.get('/books', (req, res) => {
-    res.status(200).send("Has mandado un GET!");
-})
-// UPDATE - actualizar un libro
-app.put('/books', checkApiKey, (req, res) => {
-    res.status(202).send("Has mandado un PUT!");
-})
-// DELETE - Borrar un libro
-app.delete('/books', (req, res) => {
-    res.status(202).send("Has mandado un DELETE!");
-})
 
-app.get('/first_template', function (req, res) {
-    res.render('first_view');
+
+app.get('/content', function (req, res) {
+    res.render('content');
 });
 
 
-// /products
-// GET http://localhost:3000/products/3
-// GET http://localhost:3000/products/4
-// GET http://localhost:3000/products
-app.get('/products/:id?', async (req, res) => {
-    if (req.params.id) { // con ID
-        try {
-            let response = await fetch(`https://fakestoreapi.com/products/${req.params.id}`); //{}
-            let products = await response.json(); //{}
-            res.render('products', { "products": [products] }); // Pinta datos en el pug
-        }
-        catch (error) {
-            console.log(`ERROR: ${error.stack}`);
-        }
-    } else { // sin ID --> TODOS los products
-        try {
-            let response = await fetch(`https://fakestoreapi.com/products`); // []
-            let products = await response.json(); // []
-            res.render('products', { products }); // Pinta datos en el pug
-        }
-        catch (error) {
-            console.log(`ERROR: ${error.stack}`);
-        }
-    }
-});
+
+//Router - enrutamiento automatizado
+
+app.use(manage404); //error para rutas no encontradas
+
+app.listen(port, () => {
+    console.log(
+        cowsay.say({
+            text: `on port http://localhost:${port}. Que tenga un buen día.`,
+            e: "oO",
+            T: "U "
+        }))
+})
 
 /*Objeto de prueba para crear*/
 /*
@@ -155,7 +101,7 @@ app.get('/products/:id?', async (req, res) => {
 */
 
 // POST http://localhost:3000/products
-app.post('/products', async (req, res) => {
+/*app.post('/products', async (req, res) => {
     console.log("Esto es el console.log de lo que introducimos por postman",req.body); // Objeto recibido de producto nuevo
     const newProduct = req.body; // {} nuevo producto a guardar
 
@@ -175,66 +121,4 @@ app.post('/products', async (req, res) => {
     console.log("Este es el console.log de lo que devuelve la api",answer);
 
     res.status(201).json({msj:`Producto ${answer.title} guardado en el sistema con ID: ${answer.id}`});
-});
-
-
-
-app.listen(port, () => {
-    console.log(
-        cowsay.say({
-            text: `Nos vamos a por tortilla (si queda) Example app listening on port http://localhost:${port}`,
-            e: "oO",
-            T: "U "
-        }))
-})
-
-// /products
-// GET http://localhost:3000/api/products/3
-// GET http://localhost:3000/api/products/4
-// GET http://localhost:3000/api/products
-app.get('/api/products/:id?', async (req, res) => {
-    if (req.params.id) { // con ID
-        try {
-            let response = await fetch(`https://fakestoreapi.com/products/${req.params.id}`); //{}
-            let products = await response.json(); //{}
-            res.status(200).json(products); // respuesta de la API 1 producto
-        }
-        catch (error) {
-            console.log(`ERROR: ${error.stack}`);
-        }
-    } else { // sin ID --> TODOS los products
-        try {
-            let response = await fetch(`https://fakestoreapi.com/products`); // []
-            let products = await response.json(); // []
-            res.status(200).json(products); // respuesta de la API todos los productos
-        }
-        catch (error) {
-            console.log(`ERROR: ${error.stack}`);
-        }
-    }
-});
-
-// POST http://localhost:3000/products
-app.post('/api/products', checkApiKey, async (req, res) => {
-    console.log("Esto es el console.log de lo que introducimos por postman", req.body); // Objeto recibido de producto nuevo
-    const newProduct = req.body; // {} nuevo producto a guardar
-
-    // Líneas
-    // para guardar
-    // en una BBDD SQL o MongoDB
-
-    let response = await fetch('https://fakestoreapi.com/products', {
-        method: "POST",
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(newProduct)
-    })
-    let answer = await response.json(); // objeto de vuelta de la petición
-    console.log("Este es el console.log de lo que devuelve la api", answer);
-
-    res.status(201).json({
-        msj: `Producto ${answer.title} guardado en el sistema con ID: ${answer.id}`, "product": answer
-    });
-});
+});*/

@@ -7,8 +7,8 @@ const calculator = require('./utils/calculator');
 
 //Rutas - importar
 const booksRouter = require("./routes/booksRoutes");
-const productsRoutes = require("./routes/productsRoutes");
-const productsApiRoutes = require("./routes/productsApiRoutes");
+const productsApiRouter = require("./routes/productsApiRoutes");
+const productsRoutes = require('./routes/productsRoutes');
 
 const app = express()
 const port = 3000
@@ -27,7 +27,7 @@ app.use(express.static('public'));
 //Rutas
 app.use("/books", booksRouter);
 app.use("/product", productsRoutes)
-app.use("/api/products", productsApiRoutes)
+app.use("/api/products", productsApiRouter)
 
 app.get('/', (req, res) => {
     const calc = calculator.add(2, 2);
